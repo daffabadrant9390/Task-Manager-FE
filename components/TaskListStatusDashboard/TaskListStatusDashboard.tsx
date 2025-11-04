@@ -3,11 +3,13 @@
 import { Plus } from "lucide-react"
 import TaskStatusColumn from "./TaskStatusColumn"
 import TaskFilter from "./TaskFilter"
-import { TasksData, TaskDataItem } from "@/lib/types/tasksData"
+import { TasksData } from "@/lib/types/tasksData"
 import { useTaskFilterStore } from "./store/useTaskFilterStore"
 import { useShallow } from "zustand/shallow"
 import { filterTasks } from "./lib/filterTasks"
 import { useMemo } from "react"
+import { useRouter } from "next/navigation"
+import {TaskTable} from "./TaskTable"
 
 interface DashboardProps {
   tasks: TasksData;
@@ -15,6 +17,7 @@ interface DashboardProps {
 }
 
 export const TaskListStatusDashboard = ({ tasks, onCreateTask }: DashboardProps) => {
+  const router = useRouter()
   const { filters } = useTaskFilterStore(
     useShallow((state) => ({
       filters: state.filters,
@@ -30,6 +33,16 @@ export const TaskListStatusDashboard = ({ tasks, onCreateTask }: DashboardProps)
   const filteredTasks = useMemo(() => {
     return filterTasks(tasks, filters)
   }, [tasks, filters])
+
+  const filteredTasksFlat = useMemo(() => {
+    return [
+      ...filteredTasks.todo,
+      ...filteredTasks.inProgress,
+      ...filteredTasks.done,
+    ]
+  }, [filteredTasks])
+
+  // Table pagination handled inside TaskTable
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -49,38 +62,15 @@ export const TaskListStatusDashboard = ({ tasks, onCreateTask }: DashboardProps)
       </div>
 
       {/* Filter Section */}
-      <div className="shrink-0 mb-4">
+      <div className="shrink-0 mb-4 ">
         <TaskFilter allTasks={allTasks} />
       </div>
 
-
-
-      {/* Kanban Board */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-4 scrollbar-hide">
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-          <TaskStatusColumn
-            title="To do"
-            count={filteredTasks.todo.length}
-            tasks={filteredTasks.todo}
-            columnColor="bg-blue-50 dark:bg-slate-800"
-            badgeColor="bg-blue-100 dark:bg-slate-700 text-blue-700 dark:text-blue-300"
-          />
-          <TaskStatusColumn
-            title="In progress"
-            count={filteredTasks.inProgress.length}
-            tasks={filteredTasks.inProgress}
-            columnColor="bg-amber-50 dark:bg-slate-800"
-            badgeColor="bg-amber-100 dark:bg-slate-700 text-amber-700 dark:text-amber-300"
-          />
-          <TaskStatusColumn
-            title="Done"
-            count={filteredTasks.done.length}
-            tasks={filteredTasks.done}
-            columnColor="bg-green-50 dark:bg-slate-800"
-            badgeColor="bg-green-100 dark:bg-slate-700 text-green-700 dark:text-green-300"
-          />
-        </div>
-      </div>
+      {/* Table View (Pagination-ready) */}
+      <TaskTable
+        tasks={filteredTasksFlat}
+        onView={(id) => router.push(`/task-detail/${id}`)}
+      />
     </div>
   )
 }

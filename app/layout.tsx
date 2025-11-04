@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { DeviceTypeContextProvider } from "@/lib/hooks/useDeviceType";
 import { RootLayoutClient } from "@/components/Layout/RootLayoutClient";
+import { AuthProvider } from "@/lib/context/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <DeviceTypeContextProvider>
-            <RootLayoutClient>{children}</RootLayoutClient>
+            <AuthProvider>
+              <RootLayoutClient>{children}</RootLayoutClient>
+            </AuthProvider>
           </DeviceTypeContextProvider>
         </ThemeProvider>
       </body>

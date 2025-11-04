@@ -8,7 +8,7 @@ interface AnimatedDropdownProps {
   label: string;
   value: string | null;
   placeholder: string;
-  options: Array<{ value: string; label: string; avatar?: string }>;
+  options: Array<{ value: string; label: string }>;
   error?: string;
   onSelect: (value: string) => void;
   onBlur?: () => void;
@@ -71,15 +71,6 @@ export function AnimatedDropdown({
           `}
         >
           <span className={`flex items-center gap-2 ${textSizeClass} ${selectedOption ? "text-foreground" : "text-gray-500 dark:text-gray-400"}`}>
-            {selectedOption?.avatar && (
-              <Image
-                src={selectedOption.avatar}
-                alt={selectedOption.label}
-                width={variant === "compact" ? 20 : 24}
-                height={variant === "compact" ? 20 : 24}
-                className="rounded-full"
-              />
-            )}
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <ChevronDown
@@ -101,33 +92,25 @@ export function AnimatedDropdown({
             }
           `}
         >
-          {options.map((option) => (
+          {options?.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => {
-                onSelect(option.value);
+                console.log("*** onClick ***", option);
+                onSelect(option?.value || '');
                 setIsOpen(false);
               }}
               className={`
                 w-full ${paddingClass} text-left transition-colors duration-150 flex items-center gap-3 cursor-pointer
-                ${value === option.value
+                ${value === option?.value
                   ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                   : "hover:bg-gray-50 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300"
                 }
                 ${textSizeClass}
               `}
             >
-              {option.avatar && (
-                <Image
-                  src={option.avatar}
-                  alt={option.label}
-                  width={variant === "compact" ? 20 : 24}
-                  height={variant === "compact" ? 20 : 24}
-                  className="rounded-full border-2 border-gray-200 dark:border-slate-600 shrink-0"
-                />
-              )}
-              <span className="font-medium">{option.label}</span>
+              <span className="font-medium">{option?.label}</span>
             </button>
           ))}
         </div>

@@ -1,16 +1,16 @@
 import { TaskDataItem, TaskStatus } from "@/lib/types/tasksData";
 import { TaskButtonConfig } from "../../types/types";
 import { ChevronDown } from "lucide-react";
-import Image from "next/image";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { getTaskStatusAvailableOptions } from "../helpers";
 import { twMerge } from "tailwind-merge";
+import { useTaskStore } from "@/lib/store/useTaskStore";
 
 export interface TaskDetailSidePanelProps {
   selectedTaskData: TaskDataItem;
 }
 
-const taskButtonStatusConfig: Record<TaskStatus, TaskButtonConfig> = {
+export const taskButtonStatusConfig: Record<TaskStatus, TaskButtonConfig> = {
   todo: { label: "To Do", bgColor: "bg-gray-400", hoverColor: "hover:bg-gray-500" },
   inProgress: { label: "In Progress", bgColor: "bg-blue-600", hoverColor: "hover:bg-blue-700" },
   done: { label: "Done", bgColor: "bg-green-500", hoverColor: "hover:bg-green-600" },
@@ -20,6 +20,7 @@ export const TaskDetailSidePanel = ({ selectedTaskData }: TaskDetailSidePanelPro
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const statusDropdownRef = useRef<HTMLDivElement>(null)
   const selectedConfig = taskButtonStatusConfig[selectedTaskData?.status || ''];
+  const { updateTaskStatus } = useTaskStore();
 
   const availableStatusOptions = useMemo(() => {
     return getTaskStatusAvailableOptions(selectedTaskData?.status);
@@ -83,9 +84,12 @@ export const TaskDetailSidePanel = ({ selectedTaskData }: TaskDetailSidePanelPro
                   return (
                     <button
                       key={idx}
-                      onClick={() => {
-                        // TODO: Handle status change here
-                        setIsStatusOpen(false)
+                      onClick={async() => {
+                        try {
+                          await updateTaskStatus(selectedTaskData.id, availableStatusItem);
+                        } finally {
+                          setIsStatusOpen(false)
+                        }
                       }}
                       className={twMerge(
                         "w-full px-3 py-2.5 text-left text-sm font-medium transition-all duration-150 cursor-pointer",
@@ -139,15 +143,7 @@ export const TaskDetailSidePanel = ({ selectedTaskData }: TaskDetailSidePanelPro
               <div className="flex items-center gap-2">
                 {selectedTaskData?.assignee ? (
                   <>
-                    <Image
-                      src={selectedTaskData.assignee.avatar || "/placeholder.svg"}
-                      alt={selectedTaskData.assignee.name}
-                      className="w-6 h-6 rounded-full border border-gray-200 dark:border-slate-600"
-                      title={selectedTaskData.assignee.name}
-                      height={24}
-                      width={24}
-                    />
-                    <span className="text-sm text-foreground font-medium">{selectedTaskData.assignee.name}</span>
+                    <span className="text-sm text-foreground font-medium" title={selectedTaskData.assignee.name}>{selectedTaskData.assignee.name}</span>
                   </>
                 ) : (
                   <span className="text-sm text-gray-400 dark:text-gray-500">Unassigned</span>

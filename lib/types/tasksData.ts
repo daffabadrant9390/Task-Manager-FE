@@ -5,7 +5,6 @@ export type TaskType = "story" | "subtask" | "defect";
 export type Assignee = {
   id: string;
   name: string;
-  avatar: string;
 }
 
 export type TaskDataItem = {

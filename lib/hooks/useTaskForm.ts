@@ -34,6 +34,7 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
   // Update form when initialData changes
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         title: initialData.title || "",
         description: initialData.description || "",
@@ -42,8 +43,6 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
         endDate: parseDateString(initialData.endDate),
         type: initialData.taskType || "",
       });
-      setErrors({});
-      setTouched({});
     } else {
       // Reset form when initialData becomes null/undefined (switching from edit to create)
       setFormData({
@@ -54,8 +53,6 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
         endDate: "",
         type: "",
       });
-      setErrors({});
-      setTouched({});
     }
   }, [initialData]);
 

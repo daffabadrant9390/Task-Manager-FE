@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Filter, X, ChevronDown, Search } from "lucide-react"
-import Image from "next/image"
 import { useTaskFilterStore } from "./store/useTaskFilterStore"
 import { useShallow } from "zustand/shallow"
 import { TaskStatus, TaskDataItem, Assignee } from "@/lib/types/tasksData"
@@ -151,15 +150,6 @@ export default function TaskFilter({ allTasks }: TaskFilterProps) {
                 }
               `}
             >
-              {selectedAssignee && (
-                <Image
-                  src={selectedAssignee.avatar}
-                  height={20}
-                  width={20}
-                  alt={selectedAssignee.name}
-                  className="w-5 h-5 rounded-full border border-gray-300 dark:border-slate-500"
-                />
-              )}
               <span>{selectedAssignee?.name || "Assignee"}</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${isAssigneeOpen ? "rotate-180" : ""}`} />
               {filters.assigneeId && (
@@ -194,13 +184,6 @@ export default function TaskFilter({ allTasks }: TaskFilterProps) {
                         }
                       `}
                     >
-                      <Image
-                        src={assignee.avatar}
-                        height={24}
-                        width={24}
-                        alt={assignee.name}
-                        className="w-6 h-6 rounded-full border-2 border-gray-200 dark:border-slate-600 shrink-0"
-                      />
                       <span className="font-medium truncate">{assignee.name}</span>
                     </button>
                   ))

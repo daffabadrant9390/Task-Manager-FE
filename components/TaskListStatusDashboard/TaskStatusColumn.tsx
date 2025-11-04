@@ -14,7 +14,7 @@ interface Task {
   description: string
   status: "todo" | "inProgress" | "done"
   projectId: string
-  assignees: Array<{ id: string; name: string; avatar: string }>
+  assignees: Array<{ id: string; name: string }>
   startDate: string
   endDate: string
   effort: number

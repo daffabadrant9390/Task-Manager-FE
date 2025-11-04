@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { useTaskForm } from "../CreateNewTask/hooks/useTaskForm";
-import { AnimatedDropdown } from "../CreateNewTask/components/AnimatedDropdown";
+import { useTaskForm } from "../../lib/hooks/useTaskForm";
+import { AnimatedDropdown } from "../AnimatedDropdown";
 import { AVAILABLE_ASSIGNEES } from "@/lib/constants/assignees";
 import { TaskType, TaskDataItem } from "@/lib/types/tasksData";
 import { formatDateString } from "@/lib/utils/dateUtils";
+import { useUsers } from "@/lib/hooks/useUsers";
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (taskData: any) => void;
+  onSubmit?: (taskData: TaskDataItem) => void;
   initialTask?: TaskDataItem | null;
 }
 
@@ -23,6 +24,8 @@ const TASK_TYPE_OPTIONS: Array<{ value: TaskType; label: string }> = [
 
 export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalProps) => {
   const isEditMode = !!initialTask;
+
+  const { users: assignableUsers } = useUsers();
   
   const {
     formData,
@@ -37,12 +40,18 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const assigneeOptions = assignableUsers?.map((userItem) => ({
+    value: userItem?.id || '',
+    label: userItem?.name || '',
+  }))
+
   // Reset form when modal closes (only if not in edit mode or when closing)
   useEffect(() => {
     if (!isOpen) {
       if (!isEditMode) {
         resetForm();
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSubmitting(false);
     }
   }, [isOpen, resetForm, isEditMode]);
@@ -61,7 +70,22 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
     if (submissionData) {
       // Call onSubmit callback if provided
       if (onSubmit) {
-        onSubmit(submissionData);
+        onSubmit({
+          id: submissionData?.id || '',
+          title: submissionData?.title || '',
+          description: submissionData?.description || '',
+          assignee: {
+            id: submissionData?.assignee?.id || '',
+            name: submissionData?.assignee?.name || '',
+          },
+          startDate: submissionData?.startDate || '',
+          endDate: submissionData?.endDate || '',
+          taskType: submissionData?.taskType || '',
+          status: submissionData?.status || 'todo',
+          projectId: submissionData?.projectId || '',
+          effort: submissionData?.effort || 0,
+          priority: submissionData?.priority || 'low',
+        });
       } else {
         // Default behavior: log to console
         console.log(isEditMode ? "Task updated:" : "Task created:", submissionData);
@@ -87,12 +111,6 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
   };
 
   if (!isOpen) return null;
-
-  const assigneeOptions = AVAILABLE_ASSIGNEES.map((assignee) => ({
-    value: assignee.id,
-    label: assignee.name,
-    avatar: assignee.avatar,
-  }));
 
   return (
     <>
@@ -221,9 +239,12 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
                 options={assigneeOptions}
                 error={touched.assignee ? errors.assignee : undefined}
                 onSelect={(value) => {
-                  const assignee = AVAILABLE_ASSIGNEES.find((a) => a.id === value);
-                  if (assignee) {
-                    updateField("assignee", assignee);
+                  const assignee = assignableUsers?.find((assigneeItem) => assigneeItem?.id === value);
+                  if (!!assignee) {
+                    updateField("assignee", {
+                      id: assignee?.id || '',
+                      name: assignee?.name || '',
+                    });
                     markFieldAsTouched("assignee");
                   }
                 }}

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Navigation } from "./Navigation";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTheme } from "@/lib/hooks/useTheme";
-import Image from "next/image";
+import { useAuth } from "@/lib/context/AuthContext";
 
 export interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,6 +19,7 @@ export const DashboardLayout = ({
     theme,
     toggleTheme
   } = useTheme();
+  const { logout, userData } = useAuth();
 
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
@@ -99,10 +100,20 @@ export const DashboardLayout = ({
 
         {/* Logout */}
         <div className="p-4 border-t border-[#38414A] shrink-0">
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[#F87171] hover:bg-[#2C333A] transition-colors font-medium cursor-pointer">
-            <span>↩</span>
-            <span>Log out</span>
-          </button>
+          <div className="flex flex-col gap-2">
+            {!!userData && (
+              <div className="text-xs text-[#8C9CB8]">
+                Signed in as <span className="text-[#B6C2CF] font-medium break-all">{userData?.username || ''}</span>
+              </div>
+            )}
+            <button
+              onClick={logout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-[#F87171] hover:bg-[#2C333A] transition-colors font-medium cursor-pointer"
+            >
+              <span>↩</span>
+              <span>Log out</span>
+            </button>
+          </div>
         </div>
 
       </aside>
@@ -136,9 +147,9 @@ export const DashboardLayout = ({
                   <Sun className="w-5 h-5 text-[#B6C2CF]" />
                 )}
               </button>
-              <button className="w-8 h-8 md:w-10 md:h-10 bg-[#2C333A] rounded-full overflow-hidden shrink-0 border border-[#38414A] cursor-pointer hover:bg-[#38414A] transition-colors">
-                <Image src="https://i.pravatar.cc/150?img=3" height={40} width={40} alt="User" className="w-full h-full object-cover" />
-              </button>
+              <div className="text-sm md:text-base text-[#B6C2CF]">
+                Hello, Welcome Back, <b className="text-red-500 font-bold">{userData?.username || ''}</b>
+              </div>
             </div>
           </div>
         </header>

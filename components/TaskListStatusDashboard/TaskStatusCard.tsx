@@ -34,16 +34,8 @@ export default function TaskCard({ task, isSelected, onSelect }: TaskCardProps) 
           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{task.projectId}</span>
         </div>
         {!!task?.assignee && (
-          <div className="flex -space-x-2">
-            <Image
-              key={task?.assignee?.id}
-              src={task?.assignee?.avatar}
-              height={20}
-              width={20}
-              alt={task?.assignee?.name}
-              className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700"
-              title={task?.assignee?.name}
-            />
+          <div className="text-xs font-medium text-gray-700 dark:text-gray-300" title={task?.assignee?.name}>
+            {task?.assignee?.name}
           </div>
         )}
       </div>

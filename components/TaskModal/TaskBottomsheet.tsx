@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { useTaskForm } from "../CreateNewTask/hooks/useTaskForm";
-import { AnimatedDropdown } from "../CreateNewTask/components/AnimatedDropdown";
+import { useTaskForm } from "../../lib/hooks/useTaskForm";
+import { AnimatedDropdown } from "../AnimatedDropdown";
 import { AVAILABLE_ASSIGNEES } from "@/lib/constants/assignees";
 import { TaskType, TaskDataItem } from "@/lib/types/tasksData";
 
 interface TaskBottomsheetProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (taskData: any) => void;
+  onSubmit?: (taskData: TaskDataItem) => void;
   initialTask?: TaskDataItem | null;
 }
 
@@ -42,6 +42,7 @@ export const TaskBottomsheet = ({ isOpen, onClose, onSubmit, initialTask }: Task
       if (!isEditMode) {
         resetForm();
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSubmitting(false);
     }
   }, [isOpen, resetForm, isEditMode]);
@@ -60,7 +61,22 @@ export const TaskBottomsheet = ({ isOpen, onClose, onSubmit, initialTask }: Task
     if (submissionData) {
       // Call onSubmit callback if provided
       if (onSubmit) {
-        onSubmit(submissionData);
+        onSubmit({
+          id: submissionData?.id || '',
+          title: submissionData?.title || '',
+          description: submissionData?.description || '',
+          assignee: {
+            id: submissionData?.assignee?.id || '',
+            name: submissionData?.assignee?.name || '',
+          },
+          startDate: submissionData?.startDate || '',
+          endDate: submissionData?.endDate || '',
+          taskType: submissionData?.taskType || '',
+          status: submissionData?.status || 'todo',
+          projectId: submissionData?.projectId || '',
+          effort: submissionData?.effort || 0,
+          priority: submissionData?.priority || 'low',
+        });
       } else {
         // Default behavior: log to console
         console.log(isEditMode ? "Task updated:" : "Task created:", submissionData);
@@ -90,7 +106,6 @@ export const TaskBottomsheet = ({ isOpen, onClose, onSubmit, initialTask }: Task
   const assigneeOptions = AVAILABLE_ASSIGNEES.map((assignee) => ({
     value: assignee.id,
     label: assignee.name,
-    avatar: assignee.avatar,
   }));
 
   return (
