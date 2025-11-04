@@ -11,6 +11,13 @@ export const Navigation = () => {
           <div className="w-5 h-5 bg-white rounded shrink-0" />
           <span className="text-sm md:text-base">Boards</span>
         </Link>
+        <Link
+          href="/stats"
+          className="flex items-center gap-3 px-3 md:px-4 py-2 md:py-2.5 rounded-lg bg-white text-[#0052CC] font-medium transition-colors hover:bg-gray-50 border cursor-pointer"
+        >
+          <div className="w-5 h-5 bg-[#0052CC] rounded shrink-0" />
+          <span className="text-sm md:text-base">My Stats</span>
+        </Link>
       </div>
     </nav>
   )

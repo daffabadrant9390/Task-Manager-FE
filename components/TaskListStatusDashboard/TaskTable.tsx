@@ -3,34 +3,64 @@
 import { useEffect, useMemo, useState } from "react"
 import { TaskDataItem } from "@/lib/types/tasksData"
 import { taskButtonStatusConfig } from "@/app/task-detail/[id]/components/TaskDetailSidePanel"
+import { AnimatedDropdown } from "@/components/AnimatedDropdown"
+
+interface ServerPaginationMeta {
+  page: number
+  limit: number
+  total: number
+  sort?: 'asc' | 'desc'
+  onPageChange: (nextPage: number) => void
+  onSortChange?: (sort: 'asc' | 'desc') => void
+}
 
 interface TaskTableProps {
   tasks: TaskDataItem[]
   onView: (taskId: string) => void
   pageSize?: number
+  serverMeta?: ServerPaginationMeta
 }
 
-export const TaskTable = ({ tasks, onView, pageSize = 2 }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onView, pageSize = 2, serverMeta }: TaskTableProps) => {
   const [currentPage, setCurrentPage] = useState(1)
 
-  const totalItems = tasks.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  const totalItems = serverMeta ? serverMeta.total : tasks.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / (serverMeta ? serverMeta.limit : pageSize)))
 
   // Reset to page 1 when tasks change (e.g., filters applied)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    setCurrentPage(1)
-  }, [tasks])
+    if (!serverMeta) {
+      setCurrentPage(1)
+    }
+  }, [tasks, serverMeta])
 
   const paginatedTasks = useMemo(() => {
+    if (serverMeta) return tasks
     const start = (currentPage - 1) * pageSize
     return tasks.slice(start, start + pageSize)
-  }, [tasks, currentPage, pageSize])
+  }, [tasks, currentPage, pageSize, serverMeta])
 
   return (
     <div className="mt-6 sm:mt-8">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h2 className="text-lg sm:text-xl font-semibold text-foreground">Tasks</h2>
+        <div className="flex items-center gap-2">
+          {serverMeta && (
+            <div className="min-w-[180px]">
+              <AnimatedDropdown
+                label="Sort by"
+                value={serverMeta.sort || 'desc'}
+                placeholder="Select sort"
+                options={[
+                  { value: 'desc', label: 'Newest' },
+                  { value: 'asc', label: 'Oldest' },
+                ]}
+                onSelect={(value) => serverMeta.onSortChange?.((value as 'asc' | 'desc') || 'desc')}
+                variant="compact"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="w-full overflow-x-auto rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-slate-800">
@@ -105,22 +135,26 @@ export const TaskTable = ({ tasks, onView, pageSize = 2 }: TaskTableProps) => {
       {/* Pagination Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3">
         <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-          Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+          {serverMeta ? (
+            <>Showing {totalItems === 0 ? 0 : (serverMeta.page - 1) * serverMeta.limit + 1}-{Math.min(serverMeta.page * serverMeta.limit, totalItems)} of {totalItems}</>
+          ) : (
+            <>Showing {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalItems)} of {totalItems}</>
+          )}
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
+            onClick={() => serverMeta ? serverMeta.onPageChange(Math.max(1, serverMeta.page - 1)) : setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={serverMeta ? serverMeta.page === 1 : currentPage === 1}
             className="px-3 py-1.5 rounded-md border border-border dark:border-slate-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-slate-700/40"
           >
             Previous
           </button>
           <div className="text-sm tabular-nums">
-            {currentPage} / {totalPages}
+            {serverMeta ? serverMeta.page : currentPage} / {totalPages}
           </div>
           <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
+            onClick={() => serverMeta ? serverMeta.onPageChange(Math.min(totalPages, (serverMeta.page + 1))) : setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={serverMeta ? serverMeta.page === totalPages : currentPage === totalPages}
             className="px-3 py-1.5 rounded-md border border-border dark:border-slate-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-slate-700/40"
           >
             Next

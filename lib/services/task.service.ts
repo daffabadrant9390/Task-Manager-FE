@@ -40,12 +40,22 @@ export interface UpdateTaskStatusRequest {
 export interface TasksResponse {
   tasks: TaskDataItem[];
   count: number;
+  total?: number;
+  page?: number;
+  limit?: number;
+  sort?: 'asc' | 'desc';
 }
 
 export const taskService = {
   // Get all the tasks without filter
-  getAllTasks: async(): Promise<TasksResponse> => {
-    return api.get<TasksResponse>('/api/tasks');
+  getAllTasks: async(params?: { page?: number; limit?: number; sort?: 'asc' | 'desc' }): Promise<TasksResponse> => {
+    const qp = new URLSearchParams();
+    if (params?.page) qp.set('page', String(params.page));
+    if (params?.limit) qp.set('limit', String(params.limit));
+    if (params?.sort) qp.set('sort', params.sort);
+    const qs = qp.toString();
+    const endpoint = `/api/tasks${qs ? `?${qs}` : ''}`;
+    return api.get<TasksResponse>(endpoint);
   },
 
   // Get single task by ID (directly from BE)

@@ -11,21 +11,23 @@ import { TaskDataItem } from "@/lib/types/tasksData"
 import { useTasks } from "@/lib/hooks/useTasks"
 import { Loader2 } from "lucide-react"
 import { generateProjectId } from "@/lib/utils/projectIdGenerator"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 
-export default function Home() {
+export default function PagedHome() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<null>(null)
   const { isMobile } = useDeviceType()
   const router = useRouter()
+  const params = useParams()
   const searchParams = useSearchParams()
+  const pageNum = Number(params?.page ?? 1) || 1
   const sort = (searchParams.get('sort') as 'asc' | 'desc') || 'desc'
   
-  // Use SWR hook for fetching tasks
-  const { tasks, isLoading, mutate, meta } = useTasks({ page: 1, limit: 5, sort })
+  // Use SWR hook for fetching tasks for current page
+  const { tasks, isLoading, mutate, meta } = useTasks({ page: pageNum, limit: 5, sort })
   const { addNewTask } = useTaskStore();
 
-  // Fetch the tasks on mount and when mutate is called!
+  // Fetch the tasks on mount and when mutate is called
   useEffect(() => {
     mutate();
   }, [])
@@ -42,25 +44,18 @@ export default function Home() {
 
   const handleSubmit = async(taskData: TaskDataItem) => {
     try {
-      // Convert dates from YYYY-MM-DD to "30 Oct 2025" format
       const formattedTaskData: TaskDataItem = {
         ...taskData,
         startDate: formatDateString(taskData.startDate),
         endDate: formatDateString(taskData.endDate),
-        // For new tasks, set default values
         status: taskData?.status || "todo",
         projectId: taskData?.projectId || generateProjectId(),
         effort: taskData?.effort || 0,
         priority: taskData?.priority || "low",
       }
 
-      // Create a new task
       await addNewTask(formattedTaskData);
-
-      // Refresh the tasks after creating a new task
       mutate();
-
-      // Close the modal after creating a new task
       handleModalClose();
     } catch (error) {
       console.error("Failed to create new task:", error);
@@ -106,3 +101,5 @@ export default function Home() {
     </>
   )
 }
+
+

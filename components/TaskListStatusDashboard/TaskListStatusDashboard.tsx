@@ -14,9 +14,17 @@ import {TaskTable} from "./TaskTable"
 interface DashboardProps {
   tasks: TasksData;
   onCreateTask: () => void
+  serverMeta?: {
+    page: number
+    limit: number
+    total: number
+    sort?: 'asc' | 'desc'
+    onPageChange: (nextPage: number) => void
+    onSortChange?: (sort: 'asc' | 'desc') => void
+  }
 }
 
-export const TaskListStatusDashboard = ({ tasks, onCreateTask }: DashboardProps) => {
+export const TaskListStatusDashboard = ({ tasks, onCreateTask, serverMeta }: DashboardProps) => {
   const router = useRouter()
   const { filters } = useTaskFilterStore(
     useShallow((state) => ({
@@ -42,7 +50,14 @@ export const TaskListStatusDashboard = ({ tasks, onCreateTask }: DashboardProps)
     ]
   }, [filteredTasks])
 
-  // Table pagination handled inside TaskTable
+  // Determine if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(filters.status || filters.assigneeId || (filters.title && filters.title.trim()))
+  }, [filters])
+
+  // When filters are active, switch TaskTable to client-side pagination (reset page to 1)
+  // Preserve page size by forwarding server limit as pageSize
+  const pageSize = serverMeta?.limit || 5
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -70,6 +85,8 @@ export const TaskListStatusDashboard = ({ tasks, onCreateTask }: DashboardProps)
       <TaskTable
         tasks={filteredTasksFlat}
         onView={(id) => router.push(`/task-detail/${id}`)}
+        pageSize={pageSize}
+        serverMeta={hasActiveFilters ? undefined : serverMeta}
       />
     </div>
   )
