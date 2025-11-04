@@ -1,15 +1,15 @@
 "use client"
 
 import { Plus } from "lucide-react"
-import TaskStatusColumn from "./TaskStatusColumn"
 import TaskFilter from "./TaskFilter"
 import { TasksData } from "@/lib/types/tasksData"
 import { useTaskFilterStore } from "./store/useTaskFilterStore"
 import { useShallow } from "zustand/shallow"
 import { filterTasks } from "./lib/filterTasks"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import {TaskTable} from "./TaskTable"
+import { useTaskStore } from "@/lib/store/useTaskStore"
 
 interface DashboardProps {
   tasks: TasksData;
@@ -32,15 +32,34 @@ export const TaskListStatusDashboard = ({ tasks, onCreateTask, serverMeta }: Das
     }))
   )
 
+  // Access global tasks store to fetch the full dataset when filters are active
+  const { tasksData: allTasksFromStore, fetchAllTasks } = useTaskStore()
+
+  // Determine if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(filters.status || filters.assigneeId || (filters.title && filters.title.trim()))
+  }, [filters])
+
+  // When filters become active, fetch the complete tasks list (not paginated)
+  useEffect(() => {
+    if (!hasActiveFilters) return
+    // Fire and forget; store handles loading state
+    fetchAllTasks().catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasActiveFilters])
+
+  // Choose source tasks: server-paginated props when no filters, full dataset from store when filters active
+  const sourceTasks = hasActiveFilters ? allTasksFromStore : tasks
+
   // Get all tasks for filter component (to extract unique assignees)
   const allTasks = useMemo(() => {
-    return [...tasks.todo, ...tasks.inProgress, ...tasks.done]
-  }, [tasks])
+    return [...sourceTasks.todo, ...sourceTasks.inProgress, ...sourceTasks.done]
+  }, [sourceTasks])
 
-  // Filter tasks based on current filters
+  // Filter tasks based on current filters against the chosen source dataset
   const filteredTasks = useMemo(() => {
-    return filterTasks(tasks, filters)
-  }, [tasks, filters])
+    return filterTasks(sourceTasks, filters)
+  }, [sourceTasks, filters])
 
   const filteredTasksFlat = useMemo(() => {
     return [
@@ -49,11 +68,6 @@ export const TaskListStatusDashboard = ({ tasks, onCreateTask, serverMeta }: Das
       ...filteredTasks.done,
     ]
   }, [filteredTasks])
-
-  // Determine if any filter is active
-  const hasActiveFilters = useMemo(() => {
-    return Boolean(filters.status || filters.assigneeId || (filters.title && filters.title.trim()))
-  }, [filters])
 
   // When filters are active, switch TaskTable to client-side pagination (reset page to 1)
   // Preserve page size by forwarding server limit as pageSize
@@ -78,7 +92,7 @@ export const TaskListStatusDashboard = ({ tasks, onCreateTask, serverMeta }: Das
 
       {/* Filter Section */}
       <div className="shrink-0 mb-4 ">
-        <TaskFilter allTasks={allTasks} />
+        <TaskFilter allTasks={allTasks} serverMeta={serverMeta} />
       </div>
 
       {/* Table View (Pagination-ready) */}

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import Image from "next/image";
 
 interface AnimatedDropdownProps {
   label: string;

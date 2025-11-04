@@ -14,8 +14,9 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // Centralized API client with defensive guards and consistent errors
   const token = getTokenFromLS();
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -25,17 +26,38 @@ export async function apiClient<T>(
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || `HTTP error! status: ${response.status}`);
+    // Handle non-2xx responses with payload-aware message when possible
+    if (!response.ok) {
+      const errorPayload = await response
+        .json()
+        .catch(() => ({ error: `HTTP ${response.status}` }));
+      const message = (errorPayload as { error?: string; message?: string })?.error
+        || (errorPayload as { message?: string })?.message
+        || `HTTP error! status: ${response.status}`;
+      throw new Error(message);
+    }
+
+    // Some endpoints may return 204 No Content
+    if (response.status === 204) {
+      return undefined as unknown as T;
+    }
+
+    // Parse JSON safely; normalize empty body
+    const data = await response
+      .json()
+      .catch(() => ({}));
+    return data as T;
+  } catch (err) {
+    // Network or parsing failures normalized to a consistent Error
+    const message = err instanceof Error ? err.message : 'Network request failed';
+    throw new Error(message);
   }
-
-  return response.json();
 } 
 
 // Helper functions for different HTTP methods

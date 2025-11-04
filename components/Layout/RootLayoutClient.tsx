@@ -4,6 +4,7 @@ import type React from "react";
 import { usePathname } from "next/navigation";
 import { DashboardLayout } from "./DashboardLayout";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useRealtime } from "@/lib/realtime/useRealtime";
 
 export const RootLayoutClient = ({
   children
@@ -16,6 +17,7 @@ export const RootLayoutClient = ({
   
   // For everything else, only render the shell if authenticated
   const { isAuthenticated, loading } = useAuth();
+  useRealtime(isAuthenticated);
   
   // Render auth routes without dashboard shell
   if (isAuthRoute) {

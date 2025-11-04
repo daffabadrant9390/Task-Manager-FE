@@ -5,6 +5,7 @@ import { TaskDetailSidePanel } from "./components/TaskDetailSidePanel";
 import { TaskDetailContent } from "./components/TaskDetailContent";
 import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getSavedSort } from "@/lib/utils/sortPref";
 import { useTaskStore } from "@/lib/store/useTaskStore";
 import { TaskModal } from "@/components/TaskModal/TaskModal";
 import { TaskBottomsheet } from "@/components/TaskModal/TaskBottomsheet";
@@ -85,13 +86,15 @@ export default function TaskDetailPage() {
         endDate: formatDateString(taskData?.endDate),
         // Preserve existing task properties
         status: selectedTaskData?.status,
-        projectId: selectedTaskData?.projectId,
+        // projectId comes from form: null for story, parent id for subtask/defect
+        projectId: taskData?.projectId ?? null,
         effort: selectedTaskData?.effort,
         priority: selectedTaskData?.priority,
       }
 
       await updateTask(selectedTaskData?.id, formattedTaskData);
-      router.push('/'); // Return it back to the boards page after complete submit
+      const savedSort = getSavedSort() || 'desc';
+      router.push(`/?sort=${savedSort}`);
     } catch (error) {
       console.error("Failed to update task:", error);
     }
@@ -102,7 +105,8 @@ export default function TaskDetailPage() {
     try {
       await deleteTask(selectedTaskData?.id);
       setIsDeleteOpen(false);
-      router.push('/');
+      const savedSort = getSavedSort() || 'desc';
+      router.push(`/?sort=${savedSort}`);
     } catch (error) {
       console.error("Failed to delete task:", error);
     }

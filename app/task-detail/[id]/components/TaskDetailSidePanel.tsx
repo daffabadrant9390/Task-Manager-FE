@@ -164,9 +164,15 @@ export const TaskDetailSidePanel = ({ selectedTaskData }: TaskDetailSidePanelPro
             </div>
 
             {/* Dev Effort */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-700">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Dev Effort</span>
               <span className="text-sm text-foreground font-medium">{selectedTaskData?.effort || 0} {selectedTaskData?.effort === 1 ? 'day' : 'days'}</span>
+            </div>
+
+            {/* Project ID (Parent Story) */}
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Project ID</span>
+              <span className="text-sm text-foreground font-medium">{selectedTaskData?.projectId || '-'}</span>
             </div>
           </div>
         </div>

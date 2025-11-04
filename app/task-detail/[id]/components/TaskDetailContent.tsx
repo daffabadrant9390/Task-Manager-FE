@@ -27,7 +27,7 @@ export const TaskDetailContent = ({ taskData }: TaskDetailContentProps) => {
         {/* Task Key, Type, and Status Badge */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-            {taskData.projectId}
+            {taskData.projectId || '-'}
           </span>
           <span
             className={`px-2 py-1 rounded text-sm font-semibold text-white ${currentTaskType.bgColor}`}

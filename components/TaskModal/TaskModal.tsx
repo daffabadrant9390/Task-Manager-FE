@@ -4,10 +4,9 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useTaskForm } from "../../lib/hooks/useTaskForm";
 import { AnimatedDropdown } from "../AnimatedDropdown";
-import { AVAILABLE_ASSIGNEES } from "@/lib/constants/assignees";
 import { TaskType, TaskDataItem } from "@/lib/types/tasksData";
-import { formatDateString } from "@/lib/utils/dateUtils";
 import { useUsers } from "@/lib/hooks/useUsers";
+import { useTaskStore } from "@/lib/store/useTaskStore";
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -26,6 +25,7 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
   const isEditMode = !!initialTask;
 
   const { users: assignableUsers } = useUsers();
+  const { tasksData, fetchAllTasks } = useTaskStore();
   
   const {
     formData,
@@ -33,17 +33,32 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
     touched,
     updateField,
     markFieldAsTouched,
-    validate,
     resetForm,
     getFormDataForSubmission,
   } = useTaskForm(initialTask);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ensure stories are loaded when the modal opens so Parent Story has options
+  useEffect(() => {
+    if (isOpen) {
+      fetchAllTasks().catch(() => {});
+    }
+  }, [isOpen, fetchAllTasks]);
+
   const assigneeOptions = assignableUsers?.map((userItem) => ({
     value: userItem?.id || '',
     label: userItem?.name || '',
   }))
+
+  // Get all story tasks for parent selection (only for subtask/defect)
+  const storyOptions = [
+    ...tasksData.todo,
+    ...tasksData.inProgress,
+    ...tasksData.done,
+  ]
+    .filter((t) => t.taskType === 'story')
+    .map((t) => ({ value: t.id, label: `${t.id} · ${t.title}` }))
 
   // Reset form when modal closes (only if not in edit mode or when closing)
   useEffect(() => {
@@ -82,7 +97,7 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
           endDate: submissionData?.endDate || '',
           taskType: submissionData?.taskType || '',
           status: submissionData?.status || 'todo',
-          projectId: submissionData?.projectId || '',
+          projectId: submissionData?.projectId ?? null,
           effort: submissionData?.effort || 0,
           priority: submissionData?.priority || 'low',
         });
@@ -196,11 +211,32 @@ export const TaskModal = ({ isOpen, onClose, onSubmit, initialTask }: TaskModalP
                 }))}
                 error={touched.type ? errors.type : undefined}
                 onSelect={(value) => {
-                  updateField("type", value as TaskType);
+                  const newType = value as TaskType;
+                  updateField("type", newType);
+                  // Clear projectId when switching to story
+                  if (newType === "story") {
+                    updateField("projectId", null);
+                  }
                   markFieldAsTouched("type");
                 }}
                 onBlur={() => markFieldAsTouched("type")}
               />
+
+              {/* Parent Story (only for Subtask/Defect) */}
+              {(formData.type === 'subtask' || formData.type === 'defect') && (
+                <AnimatedDropdown
+                  label="Parent Story"
+                  value={formData.projectId || null}
+                  placeholder="Select parent story"
+                  options={storyOptions}
+                  error={touched.projectId ? errors.projectId : undefined}
+                  onSelect={(value) => {
+                    updateField("projectId", (value as string) || null);
+                    markFieldAsTouched("projectId");
+                  }}
+                  onBlur={() => markFieldAsTouched("projectId")}
+                />
+              )}
 
               {/* Description */}
               <div>

@@ -29,11 +29,12 @@ export const useTaskStore = create<UseTaskStore>((set, get) => ({
     try {
       const response = await taskService.getAllTasks();
 
-      // Organize tasks by status
+      // Organize tasks by status with safe defaults to avoid undefined entries
+      const source = response?.tasks ?? [];
       const organizedTasks: TasksData = {
-        todo: response?.tasks?.filter((taskItem) => taskItem?.status === 'todo'),
-        inProgress: response?.tasks?.filter((taskItem) => taskItem?.status === 'inProgress'),
-        done: response?.tasks?.filter((taskItem) => taskItem?.status === 'done'),
+        todo: source.filter((taskItem) => taskItem?.status === 'todo') ?? [],
+        inProgress: source.filter((taskItem) => taskItem?.status === 'inProgress') ?? [],
+        done: source.filter((taskItem) => taskItem?.status === 'done') ?? [],
       };
 
       set({ tasksData: organizedTasks, isLoading: false });
@@ -46,7 +47,7 @@ export const useTaskStore = create<UseTaskStore>((set, get) => ({
   },
 
   addNewTask: async (task: TaskDataItem) => {
-
+    // Create then refresh current list to keep local state in sync with server
     try {
       await taskService.createTask({
         title: task?.title,

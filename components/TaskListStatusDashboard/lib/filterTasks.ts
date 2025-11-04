@@ -1,4 +1,4 @@
-import { TasksData, TaskDataItem, TaskStatus } from "@/lib/types/tasksData";
+import { TasksData, TaskDataItem } from "@/lib/types/tasksData";
 import { TaskFilter } from "../store/useTaskFilterStore";
 
 export function filterTasks(tasks: TasksData, filters: TaskFilter): TasksData {

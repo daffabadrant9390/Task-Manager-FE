@@ -12,7 +12,7 @@ export type TaskDataItem = {
   title: string;
   description: string;
   status: TaskStatus;
-  projectId: string;
+  projectId: string | null;
   assignee: Assignee;
   startDate: string;
   endDate: string;

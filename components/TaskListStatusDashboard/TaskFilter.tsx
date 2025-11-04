@@ -5,9 +5,13 @@ import { Filter, X, ChevronDown, Search } from "lucide-react"
 import { useTaskFilterStore } from "./store/useTaskFilterStore"
 import { useShallow } from "zustand/shallow"
 import { TaskStatus, TaskDataItem, Assignee } from "@/lib/types/tasksData"
+import { useUsers } from "@/lib/hooks/useUsers"
+import { AnimatedDropdown } from "../AnimatedDropdown"
+import { ServerPaginationMeta } from "./TaskTable"
 
 interface TaskFilterProps {
-  allTasks: TaskDataItem[]
+  allTasks: TaskDataItem[];
+  serverMeta?: ServerPaginationMeta;
 }
 
 const statusOptions: { value: TaskStatus; label: string }[] = [
@@ -16,9 +20,10 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: "done", label: "Done" },
 ]
 
-export default function TaskFilter({ allTasks }: TaskFilterProps) {
+export default function TaskFilter({ allTasks, serverMeta }: TaskFilterProps) {
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [isAssigneeOpen, setIsAssigneeOpen] = useState(false)
+  const { users: fetchedUsers } = useUsers()
   const statusDropdownRef = useRef<HTMLDivElement>(null)
   const assigneeDropdownRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -34,14 +39,19 @@ export default function TaskFilter({ allTasks }: TaskFilterProps) {
       }))
     )
 
-  // Get unique assignees from all tasks
-  const uniqueAssignees: Assignee[] = Array.from(
+  // Derive unique assignees from currently provided tasks as a fallback
+  const fallbackAssignees: Assignee[] = Array.from(
     new Map<string, Assignee>(
       allTasks
         .filter((task): task is TaskDataItem & { assignee: Assignee } => !!task.assignee)
         .map((task) => [task.assignee.id, task.assignee])
     ).values()
   )
+
+  // Prefer fetched users; fall back to current-page assignees when unavailable
+  const allAssignees: Assignee[] = (fetchedUsers && fetchedUsers.length > 0)
+    ? [...fetchedUsers].sort((a, b) => a.name.localeCompare(b.name))
+    : fallbackAssignees
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -59,12 +69,33 @@ export default function TaskFilter({ allTasks }: TaskFilterProps) {
   }, [])
 
   const selectedStatus = statusOptions.find((opt) => opt.value === filters.status)
-  const selectedAssignee = uniqueAssignees.find((assignee) => assignee?.id === filters.assigneeId)
+  const selectedAssignee = allAssignees.find((assignee) => assignee?.id === filters.assigneeId)
 
   const hasActiveFilters = filters.status || filters.assigneeId || filters.title.trim()
 
   return (
     <div className="mb-4" ref={filterRef}>
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground">Tasks</h2>
+        <div className="flex items-center gap-2">
+          {serverMeta && (
+            <div className="min-w-[180px]">
+              <AnimatedDropdown
+                label="Sort by"
+                value={serverMeta.sort || 'desc'}
+                placeholder="Select sort"
+                options={[
+                  { value: 'desc', label: 'Newest' },
+                  { value: 'asc', label: 'Oldest' },
+                ]}
+                onSelect={(value) => serverMeta.onSortChange?.((value as 'asc' | 'desc') || 'desc')}
+                variant="compact"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2">
         {/* Filter Label */}
         <div className="flex items-center gap-2 shrink-0">
@@ -167,8 +198,8 @@ export default function TaskFilter({ allTasks }: TaskFilterProps) {
 
             {isAssigneeOpen && (
               <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-700 rounded-lg border border-gray-300 dark:border-slate-600 shadow-lg z-50 min-w-[200px] w-max max-w-[calc(100vw-2rem)] max-h-[300px] overflow-y-auto scrollbar-hide">
-                {uniqueAssignees.length > 0 ? (
-                  uniqueAssignees.map((assignee) => (
+                {allAssignees.length > 0 ? (
+                  allAssignees.map((assignee) => (
                     <button
                       key={assignee.id}
                       onClick={() => {

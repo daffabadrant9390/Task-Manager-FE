@@ -8,18 +8,6 @@ import { useShallow } from "zustand/shallow"
 import { useRouter } from "next/navigation"
 import { ChevronDown, ChevronUp } from "lucide-react"
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: "todo" | "inProgress" | "done"
-  projectId: string
-  assignees: Array<{ id: string; name: string }>
-  startDate: string
-  endDate: string
-  effort: number
-  priority: "high" | "medium" | "low"
-}
 
 interface TaskStatusColumnProps {
   title: string

@@ -21,33 +21,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is authenticated on mount
-    const token = authService.getToken();
-    if (token) {
-      const userId = localStorage.getItem('user_id');
-      const username = localStorage.getItem('username');
-      if (userId && username) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsAuthenticated(true);
-        setUserData({ id: userId, username });
+    // On mount, derive auth state from persisted token and user info.
+    // Guard localStorage access to avoid SSR/runtime failures.
+    try {
+      const token = authService.getToken();
+      if (token && typeof window !== 'undefined') {
+        const userId = localStorage?.getItem('user_id') || '';
+        const username = localStorage?.getItem('username') || '';
+        if (userId && username) {
+          setIsAuthenticated(true);
+          setUserData({ id: userId, username });
+        }
       }
+    } catch {
+      // Ignore storage errors; show unauthenticated state
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (username: string, password: string) => {
     try {
       const response = await authService.login({ username, password });
+      // On success, set in-memory auth state from API response
       setIsAuthenticated(true);
       setUserData({ id: response.user_id, username: response.username });
       router.push('/');
     } catch (error) {
+      // Propagate for UI to display; avoid swallowing with a generic message
       throw error;
     }
   };
 
   const logout = () => {
-    authService.logout();
+    // Best-effort cleanup; never throw during logout flow
+    try { authService.logout(); } catch {}
     setIsAuthenticated(false);
     setUserData(null);
     router.push('/login');

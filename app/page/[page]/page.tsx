@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useDeviceType } from "@/lib/hooks/useDeviceType"
 import { TaskListStatusDashboard } from "@/components/TaskListStatusDashboard/TaskListStatusDashboard"
 import { TaskModal } from "@/components/TaskModal/TaskModal"
@@ -30,7 +30,7 @@ export default function PagedHome() {
   // Fetch the tasks on mount and when mutate is called
   useEffect(() => {
     mutate();
-  }, [])
+  }, [mutate])
 
   const handleCreateTask = () => {
     setEditingTask(null)

@@ -6,6 +6,7 @@ import { useTaskForm } from "../../lib/hooks/useTaskForm";
 import { AnimatedDropdown } from "../AnimatedDropdown";
 import { AVAILABLE_ASSIGNEES } from "@/lib/constants/assignees";
 import { TaskType, TaskDataItem } from "@/lib/types/tasksData";
+import { useTaskStore } from "@/lib/store/useTaskStore";
 
 interface TaskBottomsheetProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const TASK_TYPE_OPTIONS: Array<{ value: TaskType; label: string }> = [
 
 export const TaskBottomsheet = ({ isOpen, onClose, onSubmit, initialTask }: TaskBottomsheetProps) => {
   const isEditMode = !!initialTask;
+  const { tasksData, fetchAllTasks } = useTaskStore();
   
   const {
     formData,
@@ -29,12 +31,27 @@ export const TaskBottomsheet = ({ isOpen, onClose, onSubmit, initialTask }: Task
     touched,
     updateField,
     markFieldAsTouched,
-    validate,
     resetForm,
     getFormDataForSubmission,
   } = useTaskForm(initialTask);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Ensure stories are loaded when the bottomsheet opens so Parent Story has options
+  useEffect(() => {
+    if (isOpen) {
+      fetchAllTasks().catch(() => {});
+    }
+  }, [isOpen, fetchAllTasks]);
+
+  // Get all story tasks for parent selection (only for subtask/defect)
+  const storyOptions = [
+    ...tasksData.todo,
+    ...tasksData.inProgress,
+    ...tasksData.done,
+  ]
+    .filter((t) => t.taskType === 'story')
+    .map((t) => ({ value: t.id, label: `${t.id} · ${t.title}` }))
 
   // Reset form when bottomsheet closes
   useEffect(() => {
@@ -73,7 +90,7 @@ export const TaskBottomsheet = ({ isOpen, onClose, onSubmit, initialTask }: Task
           endDate: submissionData?.endDate || '',
           taskType: submissionData?.taskType || '',
           status: submissionData?.status || 'todo',
-          projectId: submissionData?.projectId || '',
+          projectId: submissionData?.projectId ?? null,
           effort: submissionData?.effort || 0,
           priority: submissionData?.priority || 'low',
         });
@@ -196,12 +213,34 @@ export const TaskBottomsheet = ({ isOpen, onClose, onSubmit, initialTask }: Task
               }))}
               error={touched.type ? errors.type : undefined}
               onSelect={(value) => {
-                updateField("type", value as TaskType);
+                const newType = value as TaskType;
+                updateField("type", newType);
+                // Clear projectId when switching to story
+                if (newType === "story") {
+                  updateField("projectId", null);
+                }
                 markFieldAsTouched("type");
               }}
               onBlur={() => markFieldAsTouched("type")}
               variant="compact"
             />
+
+            {/* Parent Story (only for Subtask/Defect) */}
+            {(formData.type === 'subtask' || formData.type === 'defect') && (
+              <AnimatedDropdown
+                label="Parent Story"
+                value={formData.projectId || null}
+                placeholder="Select parent story"
+                options={storyOptions}
+                error={touched.projectId ? errors.projectId : undefined}
+                onSelect={(value) => {
+                  updateField("projectId", (value as string) || null);
+                  markFieldAsTouched("projectId");
+                }}
+                onBlur={() => markFieldAsTouched("projectId")}
+                variant="compact"
+              />
+            )}
 
             {/* Description */}
             <div>

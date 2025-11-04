@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useDeviceType } from "@/lib/hooks/useDeviceType"
 import { TaskListStatusDashboard } from "@/components/TaskListStatusDashboard/TaskListStatusDashboard"
 import { TaskModal } from "@/components/TaskModal/TaskModal"
@@ -10,8 +10,8 @@ import { formatDateString } from "@/lib/utils/dateUtils"
 import { TaskDataItem } from "@/lib/types/tasksData"
 import { useTasks } from "@/lib/hooks/useTasks"
 import { Loader2 } from "lucide-react"
-import { generateProjectId } from "@/lib/utils/projectIdGenerator"
 import { useRouter, useSearchParams } from "next/navigation"
+import { getSavedSort, setSavedSort } from "@/lib/utils/sortPref"
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -19,7 +19,7 @@ export default function Home() {
   const { isMobile } = useDeviceType()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const sort = (searchParams.get('sort') as 'asc' | 'desc') || 'desc'
+  const sort = (searchParams.get('sort') as 'asc' | 'desc') || getSavedSort() || 'desc'
   
   // Use SWR hook for fetching tasks
   const { tasks, isLoading, mutate, meta } = useTasks({ page: 1, limit: 5, sort })
@@ -28,7 +28,7 @@ export default function Home() {
   // Fetch the tasks on mount and when mutate is called!
   useEffect(() => {
     mutate();
-  }, [])
+  }, [mutate])
 
   const handleCreateTask = () => {
     setEditingTask(null)
@@ -49,7 +49,8 @@ export default function Home() {
         endDate: formatDateString(taskData.endDate),
         // For new tasks, set default values
         status: taskData?.status || "todo",
-        projectId: taskData?.projectId || generateProjectId(),
+        // projectId is handled by form: null for story, parent id for subtask/defect
+        projectId: taskData?.projectId ?? null,
         effort: taskData?.effort || 0,
         priority: taskData?.priority || "low",
       }
@@ -85,9 +86,9 @@ export default function Home() {
             page: meta.page,
             limit: meta.limit,
             total: meta.total,
-            sort: meta.sort,
+            sort: sort,
             onPageChange: (nextPage) => router.push(`/page/${nextPage}?sort=${meta.sort}`),
-            onSortChange: (nextSort) => router.push(`/page/${meta.page}?sort=${nextSort}`)
+            onSortChange: (nextSort) => { setSavedSort(nextSort); router.push(`/page/${meta.page}?sort=${nextSort}`) }
           }}
         />
       </div>

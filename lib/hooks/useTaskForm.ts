@@ -10,6 +10,7 @@ export interface TaskFormData {
   startDate: string;
   endDate: string;
   type: TaskType | "";
+  projectId: string | null;
 }
 
 export interface FormErrors {
@@ -19,6 +20,7 @@ export interface FormErrors {
   startDate?: string;
   endDate?: string;
   type?: string;
+  projectId?: string;
 }
 
 export function useTaskForm(initialData?: TaskDataItem | null) {
@@ -29,6 +31,7 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
     startDate: initialData ? parseDateString(initialData.startDate) : "",
     endDate: initialData ? parseDateString(initialData.endDate) : "",
     type: initialData?.taskType || "",
+    projectId: initialData?.projectId ?? null,
   });
 
   // Update form when initialData changes
@@ -42,6 +45,7 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
         startDate: parseDateString(initialData.startDate),
         endDate: parseDateString(initialData.endDate),
         type: initialData.taskType || "",
+        projectId: initialData.projectId ?? null,
       });
     } else {
       // Reset form when initialData becomes null/undefined (switching from edit to create)
@@ -52,6 +56,7 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
         startDate: "",
         endDate: "",
         type: "",
+        projectId: null,
       });
     }
   }, [initialData]);
@@ -79,6 +84,13 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
     // Type validation
     if (!formData.type) {
       newErrors.type = "Task type is required";
+    }
+
+    // projectId validation: required only for subtask/defect
+    if (formData.type === "subtask" || formData.type === "defect") {
+      if (!formData.projectId || !String(formData.projectId).trim()) {
+        newErrors.projectId = "Parent story is required";
+      }
     }
 
     // Assignee validation
@@ -130,6 +142,7 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
       startDate: "",
       endDate: "",
       type: "",
+      projectId: null,
     });
     setErrors({});
     setTouched({});
@@ -148,9 +161,9 @@ export function useTaskForm(initialData?: TaskDataItem | null) {
       startDate: formData.startDate,
       endDate: formData.endDate,
       taskType: formData.type as TaskType,
+      projectId: (formData.type === "story") ? null : (formData.projectId ? String(formData.projectId) : null),
       ...(isEdit && initialData ? {
         status: initialData.status,
-        projectId: initialData.projectId,
         effort: initialData.effort,
         priority: initialData.priority,
       } : {}),

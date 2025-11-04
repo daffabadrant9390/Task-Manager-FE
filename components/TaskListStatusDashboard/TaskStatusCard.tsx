@@ -1,7 +1,6 @@
 "use client"
 
 import { TaskDataItem } from "@/lib/types/tasksData"
-import Image from "next/image"
 
 const priorityDotColors: Record<string, string> = {
   high: "bg-red-500",

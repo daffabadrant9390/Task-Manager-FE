@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { TaskDataItem } from "@/lib/types/tasksData"
 import { taskButtonStatusConfig } from "@/app/task-detail/[id]/components/TaskDetailSidePanel"
-import { AnimatedDropdown } from "@/components/AnimatedDropdown"
 
-interface ServerPaginationMeta {
+export interface ServerPaginationMeta {
   page: number
   limit: number
   total: number
@@ -30,6 +29,7 @@ export const TaskTable = ({ tasks, onView, pageSize = 2, serverMeta }: TaskTable
   // Reset to page 1 when tasks change (e.g., filters applied)
   useEffect(() => {
     if (!serverMeta) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentPage(1)
     }
   }, [tasks, serverMeta])
@@ -42,27 +42,6 @@ export const TaskTable = ({ tasks, onView, pageSize = 2, serverMeta }: TaskTable
 
   return (
     <div className="mt-6 sm:mt-8">
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <h2 className="text-lg sm:text-xl font-semibold text-foreground">Tasks</h2>
-        <div className="flex items-center gap-2">
-          {serverMeta && (
-            <div className="min-w-[180px]">
-              <AnimatedDropdown
-                label="Sort by"
-                value={serverMeta.sort || 'desc'}
-                placeholder="Select sort"
-                options={[
-                  { value: 'desc', label: 'Newest' },
-                  { value: 'asc', label: 'Oldest' },
-                ]}
-                onSelect={(value) => serverMeta.onSortChange?.((value as 'asc' | 'desc') || 'desc')}
-                variant="compact"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="w-full overflow-x-auto rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-slate-800">
         <table className="min-w-full text-left align-middle">
           <thead className="bg-gray -50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 text-xs sm:text-sm">
@@ -72,13 +51,14 @@ export const TaskTable = ({ tasks, onView, pageSize = 2, serverMeta }: TaskTable
               <th className="px-4 py-3 font-semibold whitespace-nowrap">Title</th>
               <th className="px-4 py-3 font-semibold whitespace-nowrap">Assignee</th>
               <th className="px-4 py-3 font-semibold whitespace-nowrap">taskType</th>
+              <th className="px-4 py-3 font-semibold whitespace-nowrap">projectId</th>
               <th className="px-4 py-3 font-semibold whitespace-nowrap text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border dark:divide-slate-700 text-foreground">
             {totalItems === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                   No tasks
                 </td>
               </tr>
@@ -116,6 +96,9 @@ export const TaskTable = ({ tasks, onView, pageSize = 2, serverMeta }: TaskTable
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs sm:text-sm font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 capitalize">
                       {task.taskType}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 align-top text-sm text-gray-700 dark:text-gray-300">
+                    {task.projectId || '-'}
                   </td>
                   <td className="px-4 py-3 align-top text-right">
                     <button
