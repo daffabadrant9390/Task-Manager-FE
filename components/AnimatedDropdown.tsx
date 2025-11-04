@@ -97,7 +97,6 @@ export function AnimatedDropdown({
               key={option.value}
               type="button"
               onClick={() => {
-                console.log("*** onClick ***", option);
                 onSelect(option?.value || '');
                 setIsOpen(false);
               }}
