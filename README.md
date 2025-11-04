@@ -125,3 +125,11 @@ pnpm test:coverage  # coverage report (see coverage/index.html)
 ### Notes
 - Ensure the backend runs at `NEXT_PUBLIC_API_URL` and CORS allows the frontend origin.
 - WebSocket server must match the API base URL (same host, `/api/ws`).
+
+### Preview
+<img width="1913" height="856" alt="kredivo-ui-login" src="https://github.com/user-attachments/assets/6e8cc286-01e0-457d-9c8e-76b3b6d818ea" />
+<img width="1918" height="867" alt="kredivo-ui-table" src="https://github.com/user-attachments/assets/089e893b-5091-4c1b-bf21-1e36d34f846c" />
+<img width="1916" height="862" alt="kredivo-ui-stat" src="https://github.com/user-attachments/assets/33f6b35b-a4d4-4734-8e85-dd43542aa39f" />
+<img width="1917" height="866" alt="kredivo-ui-detail" src="https://github.com/user-attachments/assets/348254bd-ca1b-42a7-978c-fda7b80c8a97" />
+<img width="1601" height="866" alt="kredivo-ui-modal" src="https://github.com/user-attachments/assets/a0155d1c-a0c9-493d-8da4-546451cbce80" />
+<img width="517" height="862" alt="kredivo-ui-bottomsheet" src="https://github.com/user-attachments/assets/11e837ac-b8f8-4674-9eea-b8eb7f1bd3c1" />
